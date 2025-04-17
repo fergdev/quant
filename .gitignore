@@ -46,3 +46,4 @@ __pycache__/
 *.log
 data/
 .env
+.venv/

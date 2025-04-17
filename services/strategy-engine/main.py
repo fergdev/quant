@@ -1,12 +1,15 @@
+from fastapi import FastAPI
 import pandas as pd
-import os
 from core import simple_moving_avg
 
-if __name__ == "__main__":
-    file_path = "/data/sample_prices.csv"
-    if os.path.exists(file_path):
-        df = pd.read_csv(file_path)
-        result = simple_moving_avg(df)
-        print(result.tail())
-    else:
-        print(f"No data file found at {file_path}. Skipping execution.")
+app = FastAPI()
+
+@app.get("/strategy/run")
+def run_strategy():
+    df = pd.DataFrame({
+        'close': [100 + i for i in range(30)]  # 30 days of fake price data
+    })
+    result = simple_moving_avg(df)
+    result = result.replace([float('inf'), float('-inf')], None)
+    result = result.dropna()
+    return result.tail().to_dict(orient="records")

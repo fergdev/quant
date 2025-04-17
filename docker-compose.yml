@@ -1,5 +1,21 @@
+version: "3.8"
 services:
   strategy-engine:
     build: ./services/strategy-engine
+    ports:
+      - "8081:80"
+
+  kong:
+    image: kong:3.6
+    container_name: kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_LOG_LEVEL: debug
+    ports:
+      - "8000:8000"  # Public API
+      - "8001:8001"  # Admin API
     volumes:
-      - ./data:/data
+      - ./infra/kong/kong.yml:/kong/kong.yml:ro
+    depends_on:
+      - strategy-engine

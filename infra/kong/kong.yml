@@ -1,0 +1,9 @@
+_format_version: "3.0"
+
+services:
+  - name: strategy-service
+    url: http://strategy-engine:80
+    routes:
+      - name: run-strategy
+        paths:
+          - /strategy/run

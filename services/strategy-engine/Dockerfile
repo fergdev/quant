@@ -1,6 +1,5 @@
 FROM python:3.10-slim
 WORKDIR /app
-ENV PYTHONPATH=/app
 COPY . .
-RUN pip install pandas pytest
-CMD ["pytest"]
+RUN pip install pandas fastapi uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
