@@ -1,0 +1,5 @@
+services:
+  strategy-engine:
+    build: ./services/strategy-engine
+    volumes:
+      - ./data:/data

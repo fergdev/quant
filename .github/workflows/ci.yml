@@ -1,0 +1,32 @@
+name: CI - Strategy Engine
+
+on:
+  push:
+    paths:
+      - "services/strategy-engine/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t strategy-engine:latest ./services/strategy-engine
+
+      - name: Run container
+        run: |
+          docker run --rm strategy-engine:latest
+
+      - name: Run unit tests
+        run: |
+          docker build -t strategy-engine-test ./services/strategy-engine
+          docker run --rm strategy-engine-test
