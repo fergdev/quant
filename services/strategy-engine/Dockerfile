@@ -1,5 +1,6 @@
 FROM python:3.10-slim
 WORKDIR /app
-COPY main.py .
+ENV PYTHONPATH=/app
+COPY . .
 RUN pip install pandas pytest
-CMD ["python", "main.py"]
+CMD ["pytest"]
