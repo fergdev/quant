@@ -1,9 +1,39 @@
-version: "3.8"
+version: '3.9'
+
 services:
-  strategy-engine:
-    build: ./services/strategy-engine
+  market-data:
+    build:
+      context: ./services/market-data
     ports:
-      - "8081:80"
+      - "8001:80"
+    env_file:
+      - ./services/market-data/.env
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mock-market-data:
+    build:
+      context: ./services/market-data-mock
+    ports:
+      - "8003:80"
+    depends_on:
+      - redis
+    command: python main.py
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: quant
+      POSTGRES_PASSWORD: quantpass
+      POSTGRES_DB: quantdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   kong:
     image: kong:3.6
@@ -11,11 +41,101 @@ services:
     environment:
       KONG_DATABASE: "off"
       KONG_DECLARATIVE_CONFIG: /kong/kong.yml
-      KONG_LOG_LEVEL: debug
+      KONG_LOG_LEVEL: notice
     ports:
       - "8000:8000"  # Public API
-      - "8001:8001"  # Admin API
+      - "8005:8001"  # Admin API
     volumes:
       - ./infra/kong/kong.yml:/kong/kong.yml:ro
     depends_on:
-      - strategy-engine
+      - strategy-sma
+      - strategy-meanrev
+      - strategy-momentum
+      - market-data
+
+  strategy-sma:
+    build: ./services/strategies/sma
+    ports:
+      - "8010:8000"
+    environment:
+      - STRATEGY_NAME=sma
+    depends_on:
+      - market-data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  strategy-meanrev:
+    build: ./services/strategies/meanrev
+    ports:
+      - "8011:8000"
+    environment:
+      - STRATEGY_NAME=meanrev
+    depends_on:
+      - market-data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  strategy-momentum:
+    build: ./services/strategies/momentum
+    ports:
+      - "8012:8000"
+    environment:
+      - STRATEGY_NAME=momentum
+    depends_on:
+      - market-data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  signal-aggregator:
+    build:
+      context: ./services/signal-aggregator
+    depends_on:
+      - redis
+    ports:
+      - "8022:80"
+    env_file:
+      - ./services/signal-aggregator/.env
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  trade-executor-mock:
+    build:
+      context: ./services/trade-executor-mock
+    ports:
+      - "8004:80"
+    depends_on:
+      - redis
+
+  dashboard:
+    build:
+      context: ./services/dashboard
+    ports:
+      - "8501:80"
+    depends_on:
+      - redis
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

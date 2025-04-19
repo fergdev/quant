@@ -1,9 +1,23 @@
 _format_version: "3.0"
 
 services:
-  - name: strategy-service
-    url: http://strategy-engine:80
+  - name: strategy-sma
+    url: http://strategy-sma:8000
     routes:
-      - name: run-strategy
+      - name: sma
         paths:
-          - /strategy/run
+          - /strategy/sma
+
+  - name: strategy-meanrev
+    url: http://strategy-meanrev:8000
+    routes:
+      - name: meanrev
+        paths:
+          - /strategy/meanrev
+
+  - name: strategy-momentum
+    url: http://strategy-momentum:8000
+    routes:
+      - name: momentum
+        paths:
+          - /strategy/momentum
